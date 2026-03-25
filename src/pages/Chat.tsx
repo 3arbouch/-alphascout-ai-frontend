@@ -313,7 +313,14 @@ export default function Chat() {
       setStreamingText('')
       setActiveTools([])
     } catch (err: any) {
-      setMessages(prev => [...prev, { role: 'assistant', content: `**Error:** ${err.message}` }])
+      // Preserve partial response and tool steps on error
+      const errorText = fullText
+        ? fullText + `\n\n**Error:** ${err.message}`
+        : `**Error:** ${err.message}`
+      setMessages(prev => [
+        ...prev,
+        { role: 'assistant', content: errorText, toolSteps: tools.length > 0 ? tools : undefined },
+      ])
       setStreamingText('')
       setActiveTools([])
     } finally {
@@ -407,8 +414,16 @@ export default function Chat() {
                     <Markdown content={streamingText} />
                     <span className="inline-block w-1.5 h-4 bg-blue-400 animate-pulse ml-0.5 align-text-bottom" />
                   </div>
+                ) : activeTools.length > 0 ? (
+                  <span className="text-gray-400 flex items-center gap-2">
+                    <span className="inline-block w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse" />
+                    Running tools...
+                  </span>
                 ) : (
-                  <span className="text-gray-400">Thinking...</span>
+                  <span className="text-gray-400 flex items-center gap-2">
+                    <span className="inline-block w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse" />
+                    Thinking...
+                  </span>
                 )}
               </div>
             </div>
